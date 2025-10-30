@@ -1,0 +1,42 @@
+services:
+  user-service-database:
+    image: postgres
+    restart: always
+
+    container_name: user-service-database
+    environment:
+      POSTGRES_USER: ${USER_DATABASE_USER}
+      POSTGRES_PASSWORD: ${USER_DATABASE_PASSWORD}
+      POSTGRES_DB: ${USER_DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - user-service-database-data:/var/lib/postgresql
+    networks:
+      - user-service-network
+
+  user-service-api:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    container_name: user-service-api
+    env_file:
+      - .env
+    environment:
+      USER_DATABASE_URL: ${USER_DATABASE_URL}
+      FLASK_APP: run.py
+      FLASK_ENV: ${FLASK_ENV}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./user:/usr/src/app/user
+    depends_on:
+      - user-service-database
+    networks:
+      - user-service-network
+
+volumes:
+  user-service-database-data:
+networks:
+  user-service-network:
+    driver: bridge
